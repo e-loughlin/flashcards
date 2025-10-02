@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>CPP Flashcards</title>
+    <style>
+      /* Reset & base */
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        background: #f4f5f7;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .flashcard {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 12px;
+        min-height: 50vh;
+        max-height: 90;
+        max-width: 80vw;
+        min-width: 80vw;
+        width: 100%;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        transition: transform 0.2s ease;
+      }
+
+      .answer {
+        display: none;
+        padding: 1rem;
+        border-left: 5px solid #007bff;
+        background: #f1f5fb;
+        border-radius: 6px;
+        line-height: 1.5;
+        min-height: 60px; /* <-- keeps space reserved */
+      }
+
+      .feedback {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #e9f7ef;
+        border-left: 4px solid #28a745;
+        max-height: 50vh; /* adjust as needed */
+        overflow-y: auto;
+        white-space: pre-wrap; /* preserve line breaks */
+      }
+
+      .feedback::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .feedback::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+      }
+
+      .flashcard:hover {
+        transform: translateY(-3px);
+      }
+
+      /* Question */
+      .question {
+        font-weight: 600;
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+      }
+
+      /* Spinner */
+      #spinner {
+        display: none;
+        font-weight: 500;
+        color: #555;
+      }
+
+      /* Buttons */
+      button {
+        padding: 0.6rem 1.2rem;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      button:hover {
+        opacity: 0.9;
+      }
+
+      .toggle-btn {
+        background: #007bff;
+        color: #fff;
+        align-self: flex-start;
+      }
+
+      .nav-btn {
+        background: #6c757d;
+        color: #fff;
+        margin-right: 0.5rem;
+      }
+
+      .submit-btn {
+        background: #28a745;
+        color: #fff;
+        margin-top: 0.5rem;
+      }
+
+      /* Textarea */
+      textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        resize: vertical;
+        font-family: inherit;
+        font-size: 1rem;
+      }
+
+      /* Navigation & progress */
+      .navigation {
+        margin-top: auto; /* pushes nav to bottom */
+        display: flex;
+        justify-content: center; /* center buttons horizontally */
+        gap: 1rem; /* spacing between buttons */
+      }
+
+      .navigation span {
+        margin-left: auto;
+        font-size: 0.95rem;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="flashcard">
+      <!-- Question -->
+      <div class="question">{{ card.question }}</div>
+
+      <!-- Toggleable Answer -->
+      <button class="toggle-btn" onclick="toggleAnswer()">
+        Show/Hide Answer
+      </button>
+      <div id="answer" class="answer">{{ card_answer_html|safe }}</div>
+
+      <!-- User Input -->
+      <textarea
+        id="user-answer"
+        rows="4"
+        style="width: 100%; margin-top: 1rem"
+        placeholder="Type your answer here..."
+        data-index="{{ pos }}"
+      ></textarea>
+      <button class="submit-btn" onclick="submitAnswer()">Submit</button>
+
+      <!-- Spinner & Feedback -->
+      <div id="spinner">⏳ Retrieving feedback...</div>
+      <div id="feedback" class="feedback"></div>
+
+      <!-- Navigation -->
+      <div class="navigation">
+        <button class="nav-btn" onclick="navigate('previous')">Previous</button>
+        <button class="nav-btn" onclick="navigate('next')">Next</button>
+        <span id="progress">{{ pos + 1 }} / {{ total }}</span>
+      </div>
+    </div>
+
+    <script>
+      // Load saved answers from localStorage or start empty
+      let answers = JSON.parse(
+        localStorage.getItem("flashcardAnswers") || "{}",
+      );
+
+      // Populate textarea on page load
+      const textarea = document.getElementById("user-answer");
+      const idx = textarea.dataset.index;
+      if (answers[idx]) textarea.value = answers[idx];
+
+      // Save answer whenever user types
+      textarea.addEventListener("input", (e) => {
+        answers[idx] = e.target.value;
+        localStorage.setItem("flashcardAnswers", JSON.stringify(answers));
+      });
+
+      async function submitAnswer() {
+        const textarea = document.getElementById("user-answer");
+        const answer = textarea.value;
+        const spinner = document.getElementById("spinner");
+        spinner.style.display = "block";
+
+        try {
+          const res = await fetch("/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ answer }),
+          });
+          const data = await res.json();
+
+          // Update feedback div
+          const feedbackEl = document.getElementById("feedback");
+          feedbackEl.innerHTML = data.feedback_html;
+
+          // Save answer + feedback in localStorage
+          const pos = textarea.dataset.index;
+          let flashcardAnswers = JSON.parse(
+            localStorage.getItem("flashcardAnswers") || "{}",
+          );
+          flashcardAnswers[pos] = {
+            answer: answer,
+            feedback: data.feedback_html,
+          };
+          localStorage.setItem(
+            "flashcardAnswers",
+            JSON.stringify(flashcardAnswers),
+          );
+        } catch (err) {
+          console.error(err);
+        } finally {
+          spinner.style.display = "none";
+        }
+      }
+
+      async function navigate(action) {
+        const res = await fetch("/navigate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        });
+        const data = await res.json();
+
+        // Update question and answer box
+        document.querySelector(".question").innerText = data.question;
+        const answerEl = document.getElementById("answer");
+        answerEl.innerHTML = data.answer_html;
+        answerEl.style.display = "none";
+
+        // Load user answer + feedback from localStorage
+        const textarea = document.getElementById("user-answer");
+        textarea.dataset.index = data.pos;
+        let flashcardAnswers = JSON.parse(
+          localStorage.getItem("flashcardAnswers") || "{}",
+        );
+        if (flashcardAnswers[data.pos]) {
+          textarea.value = flashcardAnswers[data.pos].answer;
+          document.getElementById("feedback").innerHTML =
+            flashcardAnswers[data.pos].feedback;
+        } else {
+          textarea.value = "";
+          document.getElementById("feedback").innerHTML = "";
+        }
+
+        // Update progress
+        document.getElementById("progress").innerText =
+          `${data.pos + 1} / ${data.total}`;
+      }
+    </script>
+
+    <script>
+      function toggleAnswer() {
+        const ans = document.getElementById("answer");
+        ans.style.display = ans.style.display === "none" ? "block" : "none";
+      }
+
+      async function submitAnswer() {
+        const answer = document.getElementById("user-answer").value;
+        const spinner = document.getElementById("spinner");
+        spinner.style.display = "block";
+
+        try {
+          const res = await fetch("/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ answer }),
+          });
+          const data = await res.json();
+          document.getElementById("feedback").innerHTML = data.feedback_html;
+        } catch (err) {
+          console.error(err);
+          document.getElementById("feedback").innerText =
+            "Error submitting answer.";
+        } finally {
+          spinner.style.display = "none";
+        }
+      }
+
+      async function navigate(action) {
+        const textarea = document.getElementById("user-answer");
+        const feedbackEl = document.getElementById("feedback");
+
+        // Save current answer + feedback before navigating
+        const pos = textarea.dataset.index;
+        let flashcardAnswers = JSON.parse(
+          localStorage.getItem("flashcardAnswers") || "{}",
+        );
+        flashcardAnswers[pos] = {
+          answer: textarea.value,
+          feedback: feedbackEl.innerHTML,
+        };
+        localStorage.setItem(
+          "flashcardAnswers",
+          JSON.stringify(flashcardAnswers),
+        );
+
+        // Fetch the next/previous flashcard
+        const res = await fetch("/navigate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        });
+        const data = await res.json();
+
+        // Update question and answer box
+        document.querySelector(".question").innerText = data.question;
+        const answerEl = document.getElementById("answer");
+        answerEl.innerHTML = data.answer_html;
+        answerEl.style.display = "none";
+
+        // Set dataset index
+        textarea.dataset.index = data.pos;
+
+        // Restore stored answer + feedback if present
+        flashcardAnswers = JSON.parse(
+          localStorage.getItem("flashcardAnswers") || "{}",
+        );
+        if (flashcardAnswers[data.pos]) {
+          textarea.value = flashcardAnswers[data.pos].answer;
+          feedbackEl.innerHTML = flashcardAnswers[data.pos].feedback;
+        } else {
+          textarea.value = "";
+          feedbackEl.innerHTML = "";
+        }
+
+        // Update progress
+        document.getElementById("progress").innerText =
+          `${data.pos + 1} / ${data.total}`;
+      }
+    </script>
+  </body>
+</html>

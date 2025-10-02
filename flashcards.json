@@ -1,0 +1,402 @@
+[
+  {
+    "index": 1,
+    "question": "Explain the difference between lvalues, xvalues, prvalues in C++17 and why it matters for move semantics.",
+    "answer": "**lvalue** → has an identifiable location in memory (e.g., a variable).\n\n**xvalue (expiring value)** → an object that can be reused/moved from (e.g., result of `std::move`).\n\n**prvalue (pure rvalue)** → a temporary value not associated with memory (e.g., `42`, `foo()`).\n\n👉 Matters because **move semantics** only apply when something is an rvalue (xvalue or prvalue)."
+  },
+  {
+    "index": 2,
+    "question": "What is the 'as-if' rule and how does it affect compiler optimizations?",
+    "answer": "The **as-if rule** allows the compiler to perform any optimization as long as the **observable behavior** of the program doesn’t change.\n\nExamples: reordering instructions, eliding copies. But it **cannot** change visible side-effects like I/O or `volatile` reads."
+  },
+  {
+    "index": 3,
+    "question": "Compare static_cast, dynamic_cast, const_cast, and reinterpret_cast. When would you use each, and what are the dangers?",
+    "answer": "- `static_cast`: Compile-time checked conversions, e.g., `double -> int`, up/down casts in inheritance when safe.\n- `dynamic_cast`: Runtime-checked downcast in polymorphic hierarchies, returns `nullptr` or throws.\n- `const_cast`: Adds/removes const/volatile, **dangerous if object is truly const**.\n- `reinterpret_cast`: Bit-level reinterpretation, **very unsafe**; breaks strict aliasing, often UB."
+  },
+  {
+    "index": 4,
+    "question": "What are the guaranteed copy elision rules in C++17, and how do they change return value optimization (RVO)?",
+    "answer": "C++17 guarantees **copy elision** in certain cases:\n- Returning a prvalue from a function (`return Foo();`).\n- Throwing/catching exceptions.\n\nBefore C++17, compilers *could* elide (RVO), now they **must**.\n\nThis removes the need for `std::move` in many returns."
+  },
+  {
+    "index": 5,
+    "question": "How does two-phase name lookup work in templates, and why can it cause subtle errors?",
+    "answer": "- **Phase 1**: Names not dependent on template parameters are looked up immediately.\n- **Phase 2**: Dependent names are looked up when the template is instantiated.\n\nIssue: code that compiles outside templates may fail inside templates unless you use `this->`, `typename`, or `template` keywords."
+  },
+  {
+    "index": 6,
+    "question": "What is the 'most vexing parse', and how is it avoided in modern C++?",
+    "answer": "It’s a syntax ambiguity where something that looks like an object definition is parsed as a function declaration.\n\nExample:\n```cpp\nWidget w(Widget()); // Declares a function, not an object\n```\n\nAvoided with **uniform initialization**:\n```cpp\nWidget w{Widget{}};\n```"
+  },
+  {
+    "index": 7,
+    "question": "What are the differences between explicit and constexpr constructors?",
+    "answer": "- `explicit`: Prevents implicit conversions.\n```cpp\nFoo f = 42; // Only allowed if constructor is not explicit\n```\n\n- `constexpr`: Can be evaluated at compile time (if arguments are constant expressions).\n\nThey can be combined: `explicit constexpr Foo(int x);`"
+  },
+  {
+    "index": 8,
+    "question": "Walk through the lifetime of a temporary object — creation, destruction, and possible optimizations.",
+    "answer": "- Created at the point of expression evaluation.\n- Lifetime usually ends at the end of the full expression.\n- Can be **extended** by binding to a const reference.\n- May be optimized away by **copy elision** or **RVO**."
+  },
+  {
+    "index": 9,
+    "question": "Explain how std::shared_ptr implements reference counting. What are weak references for?",
+    "answer": "- `std::shared_ptr` holds a pointer + control block (reference count).\n- Every copy increments the count, destruction decrements.\n- When count hits 0 → object deleted.\n- `std::weak_ptr` observes the object **without extending lifetime**, useful for breaking cyclic references."
+  },
+  {
+    "index": 10,
+    "question": "How can custom allocators improve performance, and when might you use one?",
+    "answer": "Custom allocators control how containers allocate memory.\n- Can reduce fragmentation.\n- Can use memory pools, stack allocation, shared arenas.\n- Useful in high-performance or embedded systems.\n\nExample: allocating many small objects in a game engine from a pre-allocated pool."
+  },
+  {
+    "index": 11,
+    "question": "What are the dangers of placement new, and when is it useful?",
+    "answer": "**Placement new** constructs an object at a specific memory location.\n\n✅ Useful for:\n- Custom memory pools\n- Reusing raw storage (e.g., inside `std::vector`)\n\n⚠️ Dangers:\n- Must manually call destructor.\n- Must avoid memory leaks or double-destruction.\n- Alignment must be correct.\n\n```cpp\nchar buffer[sizeof(Foo)];\nFoo* f = new (buffer) Foo();\n```"
+  },
+  {
+    "index": 12,
+    "question": "In which cases do you need a virtual destructor? What happens if you forget one in a polymorphic base class?",
+    "answer": "- A **virtual destructor** is required if you intend to delete derived objects via a base pointer.\n\nIf missing:\n- Only base destructor runs.\n- Derived part is never destroyed → **resource leaks / UB**.\n\nRule: Any class with at least one virtual function should also have a virtual destructor."
+  },
+  {
+    "index": 13,
+    "question": "Explain data races vs. race conditions with examples.",
+    "answer": "- **Data race**: Two or more threads access the same memory simultaneously, at least one is a write, without synchronization → UB.\n- **Race condition**: Logical error when correctness depends on timing/order, even if synchronized.\n\nExample:\n```cpp\n// Data race\nglobal++; // no lock\n\n// Race condition\nif (!initialized) init(); // might run twice\n```"
+  },
+  {
+    "index": 14,
+    "question": "What is false sharing and how can it impact performance?",
+    "answer": "- **False sharing**: Multiple threads modify independent variables that happen to share the same CPU cache line.\n- Causes unnecessary cache invalidations → **severe slowdown**.\n\nSolution: align/pad variables to cache-line size."
+  },
+  {
+    "index": 15,
+    "question": "Compare std::mutex, std::shared_mutex, and std::atomic in terms of use cases and performance.",
+    "answer": "- `std::mutex`: Exclusive lock. Simple but blocks.\n- `std::shared_mutex`: Allows multiple readers OR one writer.\n- `std::atomic`: Lock-free, single variable operations with memory order guarantees.\n\nPerformance tradeoff:\n- `std::atomic` > `std::shared_mutex` > `std::mutex` (in low-contention scenarios)."
+  },
+  {
+    "index": 16,
+    "question": "How do memory orderings (relaxed, acquire, release, seq_cst) affect atomics?",
+    "answer": "- `relaxed`: No synchronization, just atomicity.\n- `acquire`: Prevents reordering of reads/writes before the acquire.\n- `release`: Prevents reordering of reads/writes after the release.\n- `seq_cst`: Sequential consistency across all threads.\n\n👉 Use stricter orderings only when needed — they cost more."
+  },
+  {
+    "index": 17,
+    "question": "When is a lock-free algorithm preferable, and what trade-offs do they involve?",
+    "answer": "- Preferable when:\n  - High contention on shared state.\n  - Real-time systems (blocking is unacceptable).\n\nTrade-offs:\n- Harder to design and reason about.\n- Can suffer from **livelock** or **ABA problem**.\n- Limited by what CPU atomics support."
+  },
+  {
+    "index": 18,
+    "question": "How do concepts (C++20) improve template metaprogramming compared to SFINAE?",
+    "answer": "- **SFINAE**: Hard to read, error messages cryptic.\n- **Concepts**: Declarative constraints on templates.\n\nExample:\n```cpp\ntemplate <Sortable T>\nvoid sort(T& c);\n```\n\n👉 Improves clarity, reduces boilerplate, produces better diagnostics."
+  },
+  {
+    "index": 19,
+    "question": "Compare std::variant, std::any, and std::optional. When is each appropriate?",
+    "answer": "- `std::variant`: Type-safe union, known set of types.\n- `std::any`: Type-erased container, runtime type info, more flexible but slower.\n- `std::optional`: Represents presence/absence of a single type.\n\nUse `variant` when you know possible types, `any` for arbitrary types, `optional` for nullable values."
+  },
+  {
+    "index": 20,
+    "question": "Explain structured bindings and how they interact with references vs. copies.",
+    "answer": "Structured bindings decompose objects into named variables.\n\n```cpp\nauto [x,y] = pair;\n```\n\n- With `auto`, values are copied.\n- With `auto&`, they bind by reference.\n- With `auto&&`, forwarding references.\n\nUseful with tuples, pairs, structs."
+  },
+  {
+    "index": 21,
+    "question": "What are coroutines in C++20? How do they differ from traditional async patterns?",
+    "answer": "- **Coroutines**: Functions that can suspend and resume.\n- Enable lazy generators, async/await style code.\n\nDifference:\n- No separate threads required.\n- Compiler transforms function into state machine.\n- More efficient than `std::thread` + `future` for lightweight async."
+  },
+  {
+    "index": 22,
+    "question": "How does std::ranges change the way we write algorithms?",
+    "answer": "- `std::ranges` introduces range-based overloads of algorithms.\n- Eliminates explicit iterators.\n- Enables **composable pipelines**:\n```cpp\nranges::for_each(vec | views::filter(...), ...);\n```\n\n👉 Improves readability, integrates better with views, safer (checked ranges)."
+  },
+  {
+    "index": 23,
+    "question": "Why can passing by value sometimes be faster than passing by const reference in modern C++?",
+    "answer": "- Small objects (like `int`, `double`, iterators`) fit in registers.\n- Passing by reference adds indirection (pointer load).\n- With **move semantics**, copies can be optimized away.\n\n👉 Rule of thumb: small trivially-copyable types = pass by value."
+  },
+  {
+    "index": 24,
+    "question": "How does inline expansion differ from the inline keyword?",
+    "answer": "- **inline expansion**: Optimization where compiler substitutes function body at call site.\n- **inline keyword**: Originally meant to suggest inline, now means *allow multiple definitions across TUs*.\n\nSo `inline` ≠ guaranteed inline expansion."
+  },
+  {
+    "index": 25,
+    "question": "What are cache-friendly data layouts (AoS vs. SoA), and why do they matter?",
+    "answer": "- **AoS (Array of Structs)**: Good when working with entire object.\n- **SoA (Struct of Arrays)**: Better for SIMD/parallelism, cache efficiency.\n\nExample:\n```cpp\n// AoS\nstruct Particle {float x,y,z;};\nParticle p[N];\n\n// SoA\nstruct Particles {float x[N], y[N], z[N];};\n```\n\nCache locality directly impacts performance."
+  },
+  {
+    "index": 26,
+    "question": "How do move semantics interact with containers like std::vector when resizing?",
+    "answer": "- When a `std::vector` resizes, it reallocates.\n- If elements support move, it moves them into the new buffer instead of copying.\n- More efficient for expensive-to-copy types.\n- If move is noexcept, containers strongly prefer move over copy."
+  },
+  {
+    "index": 27,
+    "question": "How can you profile and identify branch mispredictions and their cost?",
+    "answer": "- Use tools: `perf`, VTune, Linux `perf stat` with `branch-misses`.\n- Symptoms: high CPU cycles wasted, pipeline flushes.\n- Misprediction costs ~15–20 cycles (modern CPUs).\n\nFix: restructure code to be more predictable, use lookup tables, remove unpredictable branches."
+  },
+  {
+    "index": 28,
+    "question": "How do you decide between inheritance vs. composition in C++?",
+    "answer": "- **Inheritance**: “is-a” relationship, polymorphism.\n- **Composition**: “has-a” relationship, better encapsulation.\n\nRule of thumb: Prefer **composition** unless polymorphism is required.\n\n👉 Inheritance is more rigid, composition more flexible."
+  },
+  {
+    "index": 29,
+    "question": "Explain the pImpl idiom and why it’s used.",
+    "answer": "- **pImpl (pointer to implementation)** hides private details in a separate struct.\n- Header only exposes a forward declaration, source file contains details.\n\nBenefits:\n- Reduces compile-time dependencies.\n- Improves binary compatibility.\n- Encapsulation.\n\n```cpp\nclass Foo {\n  struct Impl;\n  std::unique_ptr<Impl> p;\n};\n```"
+  },
+  {
+    "index": 30,
+    "question": "How would you design a type-safe event system without relying on dynamic_cast?",
+    "answer": "- Use **templates + std::function + type erasure**.\n- Or use `std::variant` to store event types.\n\n```cpp\nstruct EventA {...};\nstruct EventB {...};\n\nusing Event = std::variant<EventA, EventB>;\n```\n\nDispatch with `std::visit` instead of `dynamic_cast`."
+  },
+  {
+    "index": 31,
+    "question": "What are the trade-offs between virtual function dispatch and CRTP (Curiously Recurring Template Pattern)?",
+    "answer": "- **Virtual dispatch**:\n  - Runtime polymorphism.\n  - Flexible but incurs vtable lookup cost.\n\n- **CRTP**:\n  - Compile-time polymorphism.\n  - Zero overhead but less flexible (must know types at compile time).\n\n👉 Choose based on runtime vs compile-time needs."
+  },
+  {
+    "index": 32,
+    "question": "How can you design a generic resource manager (e.g., for textures in a game engine)?",
+    "answer": "- Use templates + smart pointers.\n- Maintain a map from ID/path → resource.\n- Cache and reuse loaded resources.\n\n```cpp\nstd::unordered_map<std::string, std::shared_ptr<Resource>> cache;\n```\n\nEnsure thread safety, use `weak_ptr` to avoid leaks."
+  },
+  {
+    "index": 33,
+    "question": "What happens if you call delete this; inside a class method?",
+    "answer": "- If object was created with `new`, it deletes itself.\n- Dangerous because any further access is UB.\n- Must ensure no more member access after deletion.\n\n👉 Generally discouraged; better to manage lifetime externally."
+  },
+  {
+    "index": 34,
+    "question": "What are odr-use and the one-definition rule?",
+    "answer": "- **ODR (One Definition Rule)**: Entities must have exactly one definition across the program.\n- **odr-use**: Using a variable or function in a way that requires its definition (not just declaration).\n\nExample: taking address of a function = odr-use."
+  },
+  {
+    "index": 35,
+    "question": "How does C++ handle exceptions across shared library boundaries?",
+    "answer": "- Requires consistent **C++ runtime and ABI**.\n- If different compilers/runtimes are used, exception propagation may fail (UB).\n\nBest practice: don’t throw across boundaries → use error codes or opaque handles."
+  },
+  {
+    "index": 36,
+    "question": "Explain volatile in C++. Why is it not a threading primitive?",
+    "answer": "- `volatile` prevents compiler optimizations on variable access.\n- Useful for memory-mapped hardware.\n- NOT for threading: doesn’t provide atomicity or memory ordering.\n\n👉 Use `std::atomic` for multithreading."
+  },
+  {
+    "index": 37,
+    "question": "Why is it undefined behavior to reinterpret_cast a pointer to a different object type and dereference it?",
+    "answer": "- Violates **strict aliasing rules**.\n- Compiler assumes objects are only accessed through their declared type.\n- Dereferencing wrong type breaks optimizations → UB.\n\nSafe exception: `char*` or `std::byte*` may alias anything."
+  },
+  {
+    "index": 38,
+    "question": "What are strict aliasing rules, and how can they bite you?",
+    "answer": "- Compiler assumes pointers of different types don’t alias the same memory.\n- Violating this lets compiler reorder/optimize incorrectly.\n\nExample:\n```cpp\nfloat f;\nint* p = (int*)&f; // UB\n```"
+  },
+  {
+    "index": 39,
+    "question": "Can constexpr functions throw exceptions? Why or why not?",
+    "answer": "- A `constexpr` function must be evaluable at compile time.\n- It cannot throw during compile-time evaluation.\n- At runtime, it can throw **if called with non-constexpr arguments**.\n\n```cpp\nconstexpr int f(int x) { if (x<0) throw; return x; }\n```"
+  },
+  {
+    "index": 40,
+    "question": "How does exception safety (basic, strong, no-throw guarantees) apply to STL containers?",
+    "answer": "- **Basic**: No leaks, but object may be in valid but unspecified state.\n- **Strong**: Operation either completes or has no effect.\n- **No-throw**: Operation guaranteed not to throw.\n\nSTL containers document which operations meet which guarantees."
+  },
+  {
+    "index": 41,
+    "question": "Explain the differences between `std::unique_ptr`, `std::shared_ptr`, and `std::weak_ptr` and when you would use each.",
+    "answer": "- `std::unique_ptr`: Exclusive ownership, lightweight, auto deletes when goes out of scope.\n- `std::shared_ptr`: Shared ownership, reference-counted.\n- `std::weak_ptr`: Non-owning reference to break cycles in `shared_ptr` graphs.\n\nUse `unique_ptr` by default, `shared_ptr` for shared ownership, `weak_ptr` for observers."
+  },
+  {
+    "index": 42,
+    "question": "What are the performance implications of using `std::vector` vs `std::list`?",
+    "answer": "- `std::vector`: Contiguous memory, cache-friendly, O(1) access, O(n) insert/delete except at end.\n- `std::list`: Linked list, O(1) insert/delete anywhere, O(n) access, poor cache usage.\n\nUse `vector` unless frequent mid-list insertions dominate."
+  },
+  {
+    "index": 43,
+    "question": "Describe the differences between shallow copy and deep copy in C++.",
+    "answer": "- **Shallow copy**: Copies pointers only; multiple objects share same underlying memory.\n- **Deep copy**: Copies actual data; objects have independent memory.\n\nDeep copy is safer for owning resources, shallow copy is faster but risky."
+  },
+  {
+    "index": 44,
+    "question": "Explain the difference between stack allocation and heap allocation.",
+    "answer": "- **Stack**: Automatic storage, fast, lifetime tied to scope.\n- **Heap**: Manual/RAII management, dynamic lifetime, slower, must delete or use smart pointers.\n\nPrefer stack when possible for performance and safety."
+  },
+  {
+    "index": 45,
+    "question": "What is RAII and why is it important in C++?",
+    "answer": "- **RAII (Resource Acquisition Is Initialization)**: Bind resource lifetime to object lifetime.\n- Ensures automatic cleanup (destructors) and exception safety.\n\nUsed with smart pointers, locks, file handles, etc."
+  },
+  {
+    "index": 46,
+    "question": "Describe the differences between `const`, `constexpr`, and `consteval` in C++20.",
+    "answer": "- `const`: Immutable variable, runtime or compile-time.\n- `constexpr`: Can be evaluated at compile-time if arguments are constexpr.\n- `consteval`: Must be evaluated at compile-time.\n\nUse `constexpr` for performance, `consteval` for compile-time enforcement."
+  },
+  {
+    "index": 47,
+    "question": "What is a memory leak and how can you prevent it in modern C++?",
+    "answer": "- Memory leak: allocated memory not freed, leads to resource exhaustion.\n- Prevention: Use RAII and smart pointers (`unique_ptr`, `shared_ptr`). Avoid manual `new`/`delete` where possible."
+  },
+  {
+    "index": 48,
+    "question": "Explain the difference between `volatile` and `atomic` variables.",
+    "answer": "- `volatile`: Prevents compiler optimization, not thread-safe.\n- `atomic`: Thread-safe, provides synchronization primitives.\n\nUse `atomic` for multithreading; `volatile` only for memory-mapped I/O."
+  },
+  {
+    "index": 49,
+    "question": "How do you implement a thread-safe singleton in C++11 or later?",
+    "answer": "- Use **Meyers’ singleton** pattern with static local variable:\n```cpp\nstatic Singleton& get() { static Singleton instance; return instance; }\n```\n- Guaranteed thread-safe in C++11+."
+  },
+  {
+    "index": 50,
+    "question": "What are the dangers of `reinterpret_cast` and when is it appropriate?",
+    "answer": "- `reinterpret_cast`: Converts pointer types or integral types, **very unsafe**, can break strict aliasing.\n- Only use for low-level memory tricks, e.g., hardware buffers or serialization."
+  },
+  {
+    "index": 51,
+    "question": "Explain the difference between `inline` variables and functions in C++17.",
+    "answer": "- **Inline function**: Can have multiple definitions across TUs, linker merges.\n- **Inline variable**: Single instance across multiple TUs.\n\nUseful for header-only libraries."
+  },
+  {
+    "index": 52,
+    "question": "What are fold expressions and when would you use them?",
+    "answer": "- C++17 feature for variadic templates.\n- Simplifies operations over parameter packs:\n```cpp\ntemplate<typename... Args> auto sum(Args... args) { return (... + args); }\n```\n- Use for concise variadic template operations."
+  },
+  {
+    "index": 53,
+    "question": "Describe the `explicit` keyword and why it matters for constructors.",
+    "answer": "- `explicit` prevents implicit conversions that may lead to bugs.\n- Without it, single-arg constructors can convert types automatically."
+  },
+  {
+    "index": 54,
+    "question": "Explain structured bindings and capture by reference/value in C++17 lambdas.",
+    "answer": "- **Structured bindings**: Decompose objects into variables.\n- Lambdas: `[&]` captures by reference, `[=]` by value.\n- Useful for clean code with tuples, pairs, maps."
+  },
+  {
+    "index": 55,
+    "question": "What is the difference between `std::async` launch policies: `async` vs `deferred`?",
+    "answer": "- `std::launch::async`: Run immediately in a new thread.\n- `std::launch::deferred`: Run only when `.get()` is called.\n\nChoose based on concurrency vs lazy evaluation needs."
+  },
+  {
+    "index": 56,
+    "question": "How does `noexcept` affect performance and exception handling?",
+    "answer": "- `noexcept` tells compiler a function won’t throw.\n- Enables optimizations like move elision and better vector/container performance.\n- Violating it terminates the program."
+  },
+  {
+    "index": 57,
+    "question": "Explain the differences between `std::span`, `std::array`, and `std::vector`.",
+    "answer": "- `std::array`: Fixed-size stack array.\n- `std::vector`: Dynamic-size container.\n- `std::span`: Non-owning view, lightweight, no allocation.\n\nUse `span` to pass arrays generically without copying."
+  },
+  {
+    "index": 58,
+    "question": "What is SFINAE and how does it help template metaprogramming?",
+    "answer": "- **SFINAE**: Substitution Failure Is Not An Error.\n- Enables template overloads to fail gracefully, allowing alternate matches.\n- Used to detect properties or enable/disable templates."
+  },
+  {
+    "index": 59,
+    "question": "How do you prevent false sharing in multithreaded programs?",
+    "answer": "- Align/pad shared variables to cache-line size.\n- Avoid multiple threads writing nearby variables that share cache lines."
+  },
+  {
+    "index": 60,
+    "question": "Explain the differences between strong, weak, and relaxed memory ordering.",
+    "answer": "- `relaxed`: Only atomicity, no ordering.\n- `acquire/release`: Partial ordering for reads/writes.\n- `seq_cst`: Global sequential consistency.\n\nUse stricter ordering only when necessary to reduce overhead."
+  },
+  {
+    "index": 61,
+    "question": "What is the difference between dynamic initialization and static initialization of variables in C++?",
+    "answer": "- **Static**: Initialized before `main()`, deterministic order within TU.\n- **Dynamic**: Initialized at runtime, order across TUs undefined.\n- Important for singleton/global lifetime issues."
+  },
+  {
+    "index": 62,
+    "question": "What is a CRTP (Curiously Recurring Template Pattern) and its use case?",
+    "answer": "- Base class template uses derived class as template argument.\n- Enables static polymorphism without virtual overhead.\n- Example: static interface enforcement, compile-time mixins."
+  },
+  {
+    "index": 63,
+    "question": "How do you implement type erasure in C++?",
+    "answer": "- Encapsulate any type behind a common interface.\n- Example: `std::function`, `any`, polymorphic wrappers.\n- Use for generic code without templates in APIs."
+  },
+  {
+    "index": 64,
+    "question": "Explain copy elision and guaranteed copy elision in C++17.",
+    "answer": "- Copy elision: Compiler may optimize away temporary copies.\n- C++17: Guaranteed in certain return scenarios (prvalues).\n- Improves performance, reduces unnecessary moves."
+  },
+  {
+    "index": 65,
+    "question": "What is the difference between a memory barrier and a compiler fence?",
+    "answer": "- Memory barrier: Prevents hardware from reordering memory operations.\n- Compiler fence: Prevents compiler from reordering instructions.\n- Both used in concurrent programming for correct synchronization."
+  },
+  {
+    "index": 66,
+    "question": "What are the differences between `override` and `final` keywords in C++11?",
+    "answer": "- `override`: Marks function as overriding a base virtual function, compiler checks correctness.\n- `final`: Prevents further overriding or inheritance.\n- Helps maintain safe polymorphic hierarchies."
+  },
+  {
+    "index": 67,
+    "question": "What is a dangling pointer and how do you prevent it?",
+    "answer": "- Pointer referring to memory that has been freed.\n- Prevention: Set pointer to `nullptr` after delete, use smart pointers."
+  },
+  {
+    "index": 68,
+    "question": "Explain the difference between implicit and explicit template instantiation.",
+    "answer": "- Implicit: Compiler generates template when first used.\n- Explicit: Programmer forces generation, reduces compile-time in large projects."
+  },
+  {
+    "index": 69,
+    "question": "What is the difference between `std::memcpy` and `std::copy`?",
+    "answer": "- `memcpy`: Raw memory copy, no constructors/destructors.\n- `std::copy`: Uses iterators, calls copy/move constructors.\n- Use `memcpy` only for POD/trivial types."
+  },
+  {
+    "index": 70,
+    "question": "How does `alignas` and `alignof` work in C++11?",
+    "answer": "- `alignas`: Specify minimum alignment of variable or type.\n- `alignof`: Query alignment requirement of a type.\n- Useful for SIMD, low-level memory layout."
+  },
+  {
+    "index": 71,
+    "question": "What are coroutine promise types and how do they interact with suspension?",
+    "answer": "- Coroutine promise: Object returned by compiler to manage state.\n- Controls initial/final suspend, value retrieval, exception propagation.\n- Enables generators, async/await semantics."
+  },
+  {
+    "index": 72,
+    "question": "Explain `std::bit_cast` in C++20 and when it is appropriate.",
+    "answer": "- `bit_cast`: Safe type-punning at compile-time.\n- Converts object representation without UB.\n- Only for trivially copyable types."
+  },
+  {
+    "index": 73,
+    "question": "What is `std::source_location` in C++20 and its use cases?",
+    "answer": "- Captures file, line, function at call site.\n- Useful for logging, debugging, error reporting without macros."
+  },
+  {
+    "index": 74,
+    "question": "Explain the differences between type deduction with `auto`, `decltype`, and `decltype(auto)`.",
+    "answer": "- `auto`: Deduce type, strips references/top-level const.\n- `decltype`: Returns exact type expression.\n- `decltype(auto)`: Deduce with reference/pointer preservation.\n- Use `decltype(auto)` for perfect forwarding."
+  },
+  {
+    "index": 75,
+    "question": "What is `std::jthread` and how does it improve thread management?",
+    "answer": "- C++20 thread with automatic joining on destruction.\n- Supports stop tokens for cooperative cancellation.\n- Reduces risk of detached/join issues."
+  },
+  {
+    "index": 76,
+    "question": "How do you implement a lock-free queue in C++?",
+    "answer": "- Use atomic operations (CAS, fetch_add) for head/tail.\n- Ensure memory ordering correctness.\n- Example: Michael-Scott queue for multiple producers/consumers."
+  },
+  {
+    "index": 77,
+    "question": "What is `constexpr if` and how does it differ from regular `if`?",
+    "answer": "- C++17 feature: compile-time conditional.\n- Eliminates branches that cannot be taken, reduces code bloat.\n- Works only with compile-time known expressions."
+  },
+  {
+    "index": 78,
+    "question": "Explain the differences between `std::format`, `fmt::format`, and `printf` style formatting.",
+    "answer": "- `std::format`/`fmt::format`: Type-safe, modern formatting.\n- `printf`: Legacy, format strings unchecked, prone to UB.\n- Prefer `std::format` for safety and clarity."
+  },
+  {
+    "index": 79,
+    "question": "What is a 'memory order violation' in C++ concurrency and how does it manifest?",
+    "answer": "- When threads assume a certain order but compiler/CPU reorders accesses.\n- Can lead to data races, UB, subtle bugs.\n- Fix: Use `atomic` with appropriate memory order or locks."
+  },
+  {
+    "index": 80,
+    "question": "How do you implement perfect forwarding in C++ and why is it useful?",
+    "answer": "- Use `template<typename T> void f(T&& t) { g(std::forward<T>(t)); }`\n- Preserves lvalue/rvalue nature.\n- Essential for generic factories, wrapper functions, and emplace operations."
+  }
+]

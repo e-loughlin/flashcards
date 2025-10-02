@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Flashcard Review</title>
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 0.5em;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Session Review</h2>
+    <table>
+      <tr>
+        <th>Timestamp</th>
+        <th>Question</th>
+        <th>Your Answer</th>
+        <th>OpenAI Feedback</th>
+      </tr>
+      {% for row in rows %}
+      <tr>
+        <td>{{row["timestamp"]}}</td>
+        <td>{{row["question"]}}</td>
+        <td>{{row["user_answer"]}}</td>
+        <td>{{row["openai_feedback"]}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>
