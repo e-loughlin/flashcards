@@ -398,5 +398,153 @@
     "index": 80,
     "question": "How do you implement perfect forwarding in C++ and why is it useful?",
     "answer": "- Use `template<typename T> void f(T&& t) { g(std::forward<T>(t)); }`\n- Preserves lvalue/rvalue nature.\n- Essential for generic factories, wrapper functions, and emplace operations."
+  },
+  {
+    "index": 81,
+    "question": "Implement a function to reverse a linked list in-place."
+  },
+  {
+    "index": 82,
+    "question": "Write a function to detect a cycle in a linked list."
+  },
+  { "index": 83, "question": "Implement a stack using only two queues." },
+  { "index": 84, "question": "Implement a queue using only two stacks." },
+  { "index": 85, "question": "Design a LRU (Least Recently Used) cache." },
+  {
+    "index": 86,
+    "question": "Write a function to check if a string is a palindrome using O(1) extra space."
+  },
+  {
+    "index": 87,
+    "question": "Implement a thread-safe singleton in C++11 or later."
+  },
+  {
+    "index": 88,
+    "question": "Write a function to find the first non-repeating character in a string."
+  },
+  { "index": 89, "question": "Implement merge sort for an array of integers." },
+  {
+    "index": 90,
+    "question": "Implement quicksort with random pivot selection."
+  },
+  {
+    "index": 91,
+    "question": "Write a function to find the longest increasing subsequence in an array."
+  },
+  {
+    "index": 92,
+    "question": "Implement a function to evaluate a postfix expression."
+  },
+  {
+    "index": 93,
+    "question": "Implement a trie (prefix tree) with insert and search operations."
+  },
+  {
+    "index": 94,
+    "question": "Write a function to find the maximum sum subarray (Kadane’s algorithm)."
+  },
+  {
+    "index": 95,
+    "question": "Implement a function to serialize and deserialize a binary tree."
+  },
+  {
+    "index": 96,
+    "question": "Write a function to check if two binary trees are identical."
+  },
+  {
+    "index": 97,
+    "question": "Implement depth-first search (DFS) and breadth-first search (BFS) for a graph."
+  },
+  {
+    "index": 98,
+    "question": "Write a function to detect a cycle in a directed graph."
+  },
+  {
+    "index": 99,
+    "question": "Implement Dijkstra’s algorithm for shortest paths."
+  },
+  {
+    "index": 100,
+    "question": "Implement A* pathfinding algorithm on a 2D grid."
+  },
+  {
+    "index": 101,
+    "question": "Write a function to convert infix expression to postfix notation."
+  },
+  {
+    "index": 102,
+    "question": "Implement a function to check if a number is prime efficiently."
+  },
+  {
+    "index": 103,
+    "question": "Write a function to generate all permutations of a string."
+  },
+  {
+    "index": 104,
+    "question": "Implement a function to solve the N-Queens problem."
+  },
+  {
+    "index": 105,
+    "question": "Write a function to compute the power of a number using fast exponentiation."
+  },
+  {
+    "index": 106,
+    "question": "Implement a function to merge two sorted linked lists."
+  },
+  {
+    "index": 107,
+    "question": "Write a function to remove duplicates from an unsorted linked list."
+  },
+  {
+    "index": 108,
+    "question": "Implement a hash map from scratch with collision handling."
+  },
+  {
+    "index": 109,
+    "question": "Write a function to find the kth largest element in an array using a heap."
+  },
+  {
+    "index": 110,
+    "question": "Implement a function to rotate a matrix 90 degrees clockwise."
+  },
+  {
+    "index": 111,
+    "question": "Write a function to check if a binary tree is height-balanced."
+  },
+  {
+    "index": 112,
+    "question": "Implement a min-stack that returns the minimum element in O(1) time."
+  },
+  {
+    "index": 113,
+    "question": "Write a function to implement run-length encoding compression."
+  },
+  {
+    "index": 114,
+    "question": "Implement a circular buffer with fixed capacity."
+  },
+  {
+    "index": 115,
+    "question": "Write a function to solve the word ladder problem using BFS."
+  },
+  {
+    "index": 116,
+    "question": "Implement a function to compute all combinations of well-formed parentheses."
+  },
+  {
+    "index": 117,
+    "question": "Write a function to detect if a Sudoku board is valid."
+  },
+  {
+    "index": 118,
+    "question": "Implement a function to calculate edit distance between two strings."
+  },
+  {
+    "index": 119,
+    "question": "Write a function to find all strongly connected components in a graph."
+  },
+  {
+    "index": 120,
+    "question": "Implement a lock-free stack using atomic operations."
   }
 ]
