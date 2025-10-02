@@ -1,6 +1,9 @@
-# Flashcards Web App
+# C++ Flashcards Web App
 
 A web-based flashcard app for practicing C++ interview questions, with AI-generated feedback from OpenAI.
+Could easily be modified for other programming languages, by changing the prompts in `app.py`. You'd have to supply your own questions in `flashcards.json`.
+
+![Screenshot](screenshot.png)
 
 ## Features
 

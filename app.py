@@ -119,12 +119,12 @@ def submit():
                 )
             }
         ],
-        max_completion_tokens=400,  # give more room for detailed answers
+        max_completion_tokens=350, 
         temperature=0.2  # low randomness for more precise answers
     )
         feedback_text = response.choices[0].message.content.strip()
 
-        print("OpenAI feedback:", feedback_text)
+        # print("OpenAI feedback:", feedback_text)
     except Exception as e:
         feedback_text = f"Error contacting OpenAI: {e}"
 
