@@ -106,7 +106,7 @@ def submit():
                     "You are an expert senior C++ engineer and interviewer. "
                     "Given a C++ question and a user's answer, do the following:\n"
                     "1. Evaluate the user's answer and give constructive feedback.\n"
-                    "2. Provide the correct answer or explanation, even if the user's answer was correct.\n"
+                    "2. Provide the correct answer or explanation, only if the user's answer was incorrect.\n"
                     "3. Format your response clearly with Markdown (bold for emphasis, code blocks for examples).\n"
                     "4. Be detailed but concise, suitable for an engineer learning C++ deeply."
                 )
